@@ -51,6 +51,10 @@
 #include "RTIMUBNO055.h"
 #endif
 
+#if defined(GY85_53) || defined(GY85_1d)
+#include "RTIMUGY85.h"
+#endif
+
 #if defined(BMP180)
 #include "RTPressureBMP180.h"
 #endif
@@ -268,6 +272,38 @@ RTIMUSettings::RTIMUSettings()
 
     m_imuType = RTIMU_TYPE_GD20HM303DLHC;
     m_I2CSlaveAddress = L3GD20H_ADDRESS1;
+#endif
+
+#ifdef GY85_53
+
+    m_GY85AccelSampleRate = ADXL345_SAMPLERATE_100;                             
+    m_GY85AccelFsr = ADXL345_FSR_FULL;                                    
+
+    m_GY85GyroSampleRate = ITG3205_SAMPLERATE_100;                              
+    m_GY85GyroBW = ITG3205_BW_98;                                      
+    m_GY85GyroFsr = ITG3205_FULLSCALE_2000;
+
+    m_GY85CompassSampleRate = HMC5883L_SAMPLERATE_15;
+    m_GY85CompassFsr = HMC5883L_FSR_4;
+
+    m_imuType = RTIMU_TYPE_GY85;
+    m_I2CSlaveAddress = ADXL345_ADDRESS0;
+#endif
+
+#ifdef GY85_1d
+    
+    m_GY85AccelSampleRate = ADXL345_SAMPLERATE_100;                             
+    m_GY85AccelFsr = ADXL345_FSR_FULL;                                    
+
+    m_GY85GyroSampleRate = ITG3205_SAMPLERATE_100;                              
+    m_GY85GyroBW = ITG3205_BW_98;                                      
+    m_GY85GyroFsr = ITG3205_FULLSCALE_2000;
+
+    m_GY85CompassSampleRate = HMC5883L_SAMPLERATE_15;
+    m_GY85CompassFsr = HMC5883L_FSR_4;
+
+    m_imuType = RTIMU_TYPE_GY85;
+    m_I2CSlaveAddress = ADXL345_ADDRESS1;
 #endif
 
 #ifdef BNO055_28

@@ -118,6 +118,18 @@ public:
     int m_GD20HM303DLHCCompassFsr;                          // the compass full scale range
 #endif
 
+#if defined(GY85_53) || defined(GY85_1d)
+    int m_GY85AccelSampleRate;                             
+    int m_GY85AccelFsr;                                    
+
+    int m_GY85GyroSampleRate;                              
+    int m_GY85GyroBW;                                      
+    int m_GY85GyroFsr;
+
+    int m_GY85CompassSampleRate;
+    int m_GY85CompassFsr;
+#endif
+
 };
 
 #endif // _RTIMUSETTINGS_H

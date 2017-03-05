@@ -168,6 +168,10 @@ RTFLOAT RTIMU::m_axisRotation[9] = {0, 0, -1, -1, 0, 0, 0, 1, 0};
 #include "RTIMUBNO055.h"
 #endif
 
+#if defined(GY85_53) || defined(GY85_1d)
+#include "RTIMUGY85.h"
+#endif
+
 RTIMU *RTIMU::createIMU(RTIMUSettings *settings)
 {
 #if defined(MPU9150_68) || defined(MPU9150_69)
@@ -190,6 +194,9 @@ RTIMU *RTIMU::createIMU(RTIMUSettings *settings)
 #endif
 #if defined(BNO055_28) || defined(BNO055_29)
     return new RTIMUBNO055(settings);
+#endif
+    #if defined(GY85_53) || defined(GY85_1d)
+    return new RTIMUGY85(settings);
 #endif
 }
 
