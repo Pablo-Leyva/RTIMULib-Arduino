@@ -114,7 +114,7 @@ void RTIMUGY85::gyroInit() {
 void RTIMUGY85::setGyroBW() {
     uint8_t reg;
     I2CRead(m_gyroSlaveAddr, ITG3205_DLPF_FS, 1, &reg);
-    I2CWrite(m_gyroSlaveAddr, ITG3205_DLPF_FS,  (reg | m_settings->m_GY85GyroBW));
+    I2CWrite(m_gyroSlaveAddr, ITG3205_DLPF_FS,  (uint8_t)(reg | m_settings->m_GY85GyroBW));
 }
 
 void RTIMUGY85::setGyroSampleRate() {
@@ -123,16 +123,16 @@ void RTIMUGY85::setGyroSampleRate() {
 
 
 void RTIMUGY85::compassInit() {    
-
     setCompassRange();
     setCompassSampleRate();
+    I2CWrite(m_compassSlaveAddr, HMC5883L_MODE,  0);
 }
 
 void RTIMUGY85::setCompassSampleRate() {
     uint8_t reg;
     I2CRead(m_compassSlaveAddr, HMC5883L_CONFIG_A, 1, &reg);
     reg = reg & 0xE3;
-    I2CWrite(m_compassSlaveAddr, HMC5883L_CONFIG_A,  (reg | (uint8_t)(m_settings->m_GY85CompassSampleRate<<2)));
+    I2CWrite(m_compassSlaveAddr, HMC5883L_CONFIG_A,  (uint8_t)(reg | (m_settings->m_GY85CompassSampleRate<<2)));
 }
 
 void RTIMUGY85::setCompassRange() {
@@ -165,7 +165,7 @@ void RTIMUGY85::setCompassRange() {
         valid_config = false;
     }
     if (valid_config){
-        I2CWrite(m_compassSlaveAddr, HMC5883L_CONFIG_B,  m_settings->m_GY85CompassFsr << 7);
+        I2CWrite(m_compassSlaveAddr, HMC5883L_CONFIG_B,  (uint8_t)(m_settings->m_GY85CompassFsr << 5));
     }    
 }
 
@@ -188,7 +188,7 @@ bool RTIMUGY85::IMURead()
     RTMath::convertToVector(gyroData,    m_gyro,    m_gyroScale,    true);    
     RTMath::convertToVector(compassData, m_compass, m_compassScale, true);
 
-    ////  sort out compass axes
+    //  sort out compass axes
    
     //  now do standard processing
     
