@@ -26,7 +26,7 @@
 #include "RTIMUSettings.h"
 
 //  this sets the learning rate for compass running average calculation
-
+#if defined(GY85_53) || defined(GY85_1d)
 #define COMPASS_ALPHA 0.2f
 
 RTIMUGY85::RTIMUGY85(RTIMUSettings *settings) : RTIMU(settings)
@@ -197,3 +197,4 @@ bool RTIMUGY85::IMURead()
 
     return true;
 }
+#endif

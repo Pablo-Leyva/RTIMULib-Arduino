@@ -24,7 +24,7 @@
 #include "RTIMUMPU9250.h"
 #include "RTIMUSettings.h"
 
-#if defined(MPU9250_68) || defined(MPU9250_69)
+#if defined(MPU9250_68) || defined(MPU9250_69) || defined(MPU9250_SPI)
 
 RTIMUMPU9250::RTIMUMPU9250(RTIMUSettings *settings) : RTIMU(settings)
 {
@@ -166,6 +166,8 @@ int RTIMUMPU9250::IMUInit()
     //  configure IMU
 
     m_slaveAddr = m_settings->m_I2CSlaveAddress;
+    m_spiPin = m_settings->m_SPIChipSelectPin;
+    m_spiSpeed = m_settings->m_SPIClkSpeed;
 
     setSampleRate(m_settings->m_MPU9250GyroAccelSampleRate);
     setCompassRate(m_settings->m_MPU9250CompassSampleRate);
@@ -177,22 +179,21 @@ int RTIMUMPU9250::IMUInit()
     setCalibrationData();
 
     //  reset the MPU9250
-
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_PWR_MGMT_1, 0x80))
+    if (!writeByte(m_slaveAddr, MPU9250_PWR_MGMT_1,  (uint8_t)0x80))
         return -1;
 
     delay(100);
-
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_PWR_MGMT_1, 0x00))
+    if (!writeByte(m_slaveAddr, MPU9250_PWR_MGMT_1, (uint8_t)0x00))
         return -4;
 
-    if (!I2Cdev::readByte(m_slaveAddr, MPU9250_WHO_AM_I, &result))
+    if (!readByte(m_slaveAddr, MPU9250_WHO_AM_I, &result))
         return -5;
 
     if (result != MPU9250_ID) {
-         return -6;
+        return -6;
     }
 
+    writeByte(m_slaveAddr, MPU9250_USER_CTRL, (uint8_t)0x30);      // I2C Master mode and set I2C_IF_DIS to disable slave mode I2C bus
     //  now configure the various components
 
     if (!setGyroConfig())
@@ -205,24 +206,24 @@ int RTIMUMPU9250::IMUInit()
         return -9;
 
     //  now configure compass
-
+/*
     if (!bypassOn())
         return -11;
-
+*/
     // get fuse ROM data
 
-    if (!I2Cdev::writeByte(AK8963_ADDRESS, AK8963_CNTL, 0)) {
-        bypassOff();
+    if (!writeByte(AK8963_ADDRESS, AK8963_CNTL, (uint8_t)0x00)) {
+        //bypassOff();
         return -12;
     }
 
-    if (!I2Cdev::writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x0f)) {
-        bypassOff();
+    if (!writeByte(AK8963_ADDRESS, AK8963_CNTL, (uint8_t)0x0f)) {
+        //bypassOff();
         return -13;
     }
 
-    if (!I2Cdev::readBytes(AK8963_ADDRESS, AK8963_ASAX, 3, asa)) {
-        bypassOff();
+    if (!readBytes(AK8963_ADDRESS, AK8963_ASAX, 3, asa)) {
+        //bypassOff();
         return -14;
     }
 
@@ -231,42 +232,42 @@ int RTIMUMPU9250::IMUInit()
     m_compassAdjust[0] = ((float)asa[0] - 128.0) / 256.0 + 1.0f;
     m_compassAdjust[1] = ((float)asa[1] - 128.0) / 256.0 + 1.0f;
     m_compassAdjust[2] = ((float)asa[2] - 128.0) / 256.0 + 1.0f;
-
-    if (!I2Cdev::writeByte(AK8963_ADDRESS, AK8963_CNTL, 0)) {
+/*
+    if (!writeByte(AK8963_ADDRESS, AK8963_CNTL, 0)) {
         bypassOff();
         return -15;
     }
 
     if (!bypassOff())
         return -16;
-
+*/
     //  now set up MPU9250 to talk to the compass chip
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_I2C_MST_CTRL, 0x40))
+    if (!writeByte(m_slaveAddr, MPU9250_I2C_MST_CTRL, (uint8_t)0x40))
         return -17;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_I2C_SLV0_ADDR, 0x80 | AK8963_ADDRESS))
+    if (!writeByte(m_slaveAddr, MPU9250_I2C_SLV0_ADDR, (uint8_t)(0x80 | AK8963_ADDRESS)))
         return -18;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_I2C_SLV0_REG, AK8963_ST1))
+    if (!writeByte(m_slaveAddr, MPU9250_I2C_SLV0_REG, (uint8_t)AK8963_ST1))
         return -19;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_I2C_SLV0_CTRL, 0x88))
+    if (!writeByte(m_slaveAddr, MPU9250_I2C_SLV0_CTRL, (uint8_t)0x88))
         return -20;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_I2C_SLV1_ADDR, AK8963_ADDRESS))
+    if (!writeByte(m_slaveAddr, MPU9250_I2C_SLV1_ADDR, (uint8_t)AK8963_ADDRESS))
         return -21;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_I2C_SLV1_REG, AK8963_CNTL))
+    if (!writeByte(m_slaveAddr, MPU9250_I2C_SLV1_REG, (uint8_t)AK8963_CNTL))
         return -22;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_I2C_SLV1_CTRL, 0x81))
+    if (!writeByte(m_slaveAddr, MPU9250_I2C_SLV1_CTRL, (uint8_t)0x81))
         return -23;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_I2C_SLV1_DO, 0x1))
+    if (!writeByte(m_slaveAddr, MPU9250_I2C_SLV1_DO, (uint8_t)0x1))
         return -24;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_I2C_MST_DELAY_CTRL, 0x3))
+    if (!writeByte(m_slaveAddr, MPU9250_I2C_MST_DELAY_CTRL, (uint8_t)0x3))
         return -25;
 
     if (!setCompassRate())
@@ -274,11 +275,11 @@ int RTIMUMPU9250::IMUInit()
 
     //  enable the sensors
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_PWR_MGMT_1, 1))
+    if (!writeByte(m_slaveAddr, MPU9250_PWR_MGMT_1, (uint8_t)1))
         return -28;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_PWR_MGMT_2, 0))
-         return -29;
+    if (!writeByte(m_slaveAddr, MPU9250_PWR_MGMT_2, (uint8_t)0))
+        return -29;
 
     //  select the data to go into the FIFO and enable
 
@@ -291,25 +292,25 @@ int RTIMUMPU9250::IMUInit()
 
 bool RTIMUMPU9250::resetFifo()
 {
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_INT_ENABLE, 0))
+    if (!writeByte(m_slaveAddr, MPU9250_INT_ENABLE, (uint8_t)0))
         return false;
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_FIFO_EN, 0))
+    if (!writeByte(m_slaveAddr, MPU9250_FIFO_EN, (uint8_t)0))
         return false;
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_USER_CTRL, 0))
-        return false;
-
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_USER_CTRL, 0x04))
+    if (!writeByte(m_slaveAddr, MPU9250_USER_CTRL, (uint8_t)0))
         return false;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_USER_CTRL, 0x60))
+    if (!writeByte(m_slaveAddr, MPU9250_USER_CTRL, (uint8_t)0x04))
+        return false;
+
+    if (!writeByte(m_slaveAddr, MPU9250_USER_CTRL, (uint8_t)0x60))
         return false;
 
     delay(50);
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_INT_ENABLE, 1))
+    if (!writeByte(m_slaveAddr, MPU9250_INT_ENABLE, (uint8_t)1))
         return false;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_FIFO_EN, 0x78))
+    if (!writeByte(m_slaveAddr, MPU9250_FIFO_EN, (uint8_t)0x78))
         return false;
 
     return true;
@@ -317,20 +318,21 @@ bool RTIMUMPU9250::resetFifo()
 
 bool RTIMUMPU9250::bypassOn()
 {
+/*
     unsigned char userControl;
 
-    if (!I2Cdev::readByte(m_slaveAddr, MPU9250_USER_CTRL, &userControl))
+    if (!readByte(m_slaveAddr, MPU9250_USER_CTRL, &userControl))
         return false;
 
     userControl &= ~0x20;
     userControl |= 2;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_USER_CTRL, userControl))
+    if (!writeByte(m_slaveAddr, MPU9250_USER_CTRL, userControl))
         return false;
 
     delay(50);
-
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_INT_PIN_CFG, 0x82))
+*/
+    if (!writeByte(m_slaveAddr, MPU9250_INT_PIN_CFG, 0x82))
         return false;
 
     delay(50);
@@ -340,22 +342,23 @@ bool RTIMUMPU9250::bypassOn()
 
 bool RTIMUMPU9250::bypassOff()
 {
+/*
     unsigned char userControl;
 
-    if (!I2Cdev::readByte(m_slaveAddr, MPU9250_USER_CTRL, &userControl))
+    if (!readByte(m_slaveAddr, MPU9250_USER_CTRL, &userControl))
         return false;
 
     userControl |= 0x20;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_USER_CTRL, userControl))
+    if (!writeByte(m_slaveAddr, MPU9250_USER_CTRL, userControl))
         return false;
 
     delay(50);
-
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_INT_PIN_CFG, 0x80))
+*/
+    if (!writeByte(m_slaveAddr, MPU9250_INT_PIN_CFG, 0x80))
          return false;
 
-    delay(50);
+//    delay(50);
     return true;
 }
 
@@ -364,20 +367,20 @@ bool RTIMUMPU9250::setGyroConfig()
     unsigned char gyroConfig = m_gyroFsr + ((m_gyroLpf >> 3) & 3);
     unsigned char gyroLpf = m_gyroLpf & 7;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_GYRO_CONFIG, gyroConfig))
+    if (!writeByte(m_slaveAddr, MPU9250_GYRO_CONFIG, gyroConfig))
          return false;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_GYRO_LPF, gyroLpf))
+    if (!writeByte(m_slaveAddr, MPU9250_GYRO_LPF, gyroLpf))
          return false;
     return true;
 }
 
 bool RTIMUMPU9250::setAccelConfig()
 {
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_ACCEL_CONFIG, m_accelFsr))
+    if (!writeByte(m_slaveAddr, MPU9250_ACCEL_CONFIG, m_accelFsr))
          return false;
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_ACCEL_LPF, m_accelLpf))
+    if (!writeByte(m_slaveAddr, MPU9250_ACCEL_LPF, m_accelLpf))
          return false;
     return true;
 }
@@ -387,7 +390,7 @@ bool RTIMUMPU9250::setSampleRate()
     if (m_sampleRate > 1000)
         return true;                                        // SMPRT not used above 1000Hz
 
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_SMPRT_DIV, (unsigned char) (1000 / m_sampleRate - 1)))
+    if (!writeByte(m_slaveAddr, MPU9250_SMPRT_DIV, (unsigned char) (1000 / m_sampleRate - 1)))
         return false;
 
     return true;
@@ -402,14 +405,14 @@ bool RTIMUMPU9250::setCompassRate()
 
     if (rate > 31)
         rate = 31;
-    if (!I2Cdev::writeByte(m_slaveAddr, MPU9250_I2C_SLV4_CTRL, rate))
+    if (!writeByte(m_slaveAddr, MPU9250_I2C_SLV4_CTRL, rate))
          return false;
     return true;
 }
 
 int RTIMUMPU9250::IMUGetPollInterval()
 {
-    return (400 / m_sampleRate);
+    return (1000 / m_sampleRate);
 }
 
 bool RTIMUMPU9250::IMURead()
@@ -417,9 +420,12 @@ bool RTIMUMPU9250::IMURead()
     unsigned char fifoCount[2];
     unsigned int count;
     unsigned char fifoData[12];
+    
+    unsigned char accelData[8];
+    unsigned char gyroData[8];
     unsigned char compassData[8];
 
-    if (!I2Cdev::readBytes(m_slaveAddr, MPU9250_FIFO_COUNT_H, 2, fifoCount))
+    if (!readBytes(m_slaveAddr, MPU9250_FIFO_COUNT_H, 2, fifoCount))
          return false;
 
     count = ((unsigned int)fifoCount[0] << 8) + fifoCount[1];
@@ -430,10 +436,10 @@ bool RTIMUMPU9250::IMURead()
         return false;
     }
 
-    if (count > MPU9250_FIFO_CHUNK_SIZE * 40) {
+    if (count > MPU9250_FIFO_CHUNK_SIZE * 40) {        
         // more than 40 samples behind - going too slowly so discard some samples but maintain timestamp correctly
         while (count >= MPU9250_FIFO_CHUNK_SIZE * 10) {
-            if (!I2Cdev::readBytes(m_slaveAddr, MPU9250_FIFO_R_W, MPU9250_FIFO_CHUNK_SIZE, fifoData))
+            if (!readBytes(m_slaveAddr, MPU9250_FIFO_R_W, MPU9250_FIFO_CHUNK_SIZE, fifoData))
                 return false;
             count -= MPU9250_FIFO_CHUNK_SIZE;
             m_timestamp += m_sampleInterval;
@@ -443,14 +449,23 @@ bool RTIMUMPU9250::IMURead()
     if (count < MPU9250_FIFO_CHUNK_SIZE)
         return false;
 
-    if (!I2Cdev::readBytes(m_slaveAddr, MPU9250_FIFO_R_W, MPU9250_FIFO_CHUNK_SIZE, fifoData))
+    if (!readBytes(m_slaveAddr, MPU9250_FIFO_R_W, MPU9250_FIFO_CHUNK_SIZE, fifoData))
         return false;
 
-    if (!I2Cdev::readBytes(m_slaveAddr, MPU9250_EXT_SENS_DATA_00, 8, compassData))
+/*    
+    if (!readBytes(m_slaveAddr, MPU9250_ACCEL_XOUT_H, 8, accelData))
+        return false;
+
+    if (!readBytes(m_slaveAddr, MPU9250_GYRO_XOUT_H, 8, gyroData))
+        return false;
+*/
+    if (!readBytes(m_slaveAddr, MPU9250_EXT_SENS_DATA_00, 8, compassData))
         return false;
 
     RTMath::convertToVector(fifoData, m_accel, m_accelScale, true);
     RTMath::convertToVector(fifoData + 6, m_gyro, m_gyroScale, true);
+//    RTMath::convertToVector(accelData, m_accel, m_accelScale, true);
+//    RTMath::convertToVector(gyroData, m_gyro, m_gyroScale, true);
     RTMath::convertToVector(compassData + 1, m_compass, 0.6f, false);
 
     //  sort out gyro axes
@@ -490,4 +505,115 @@ bool RTIMUMPU9250::IMURead()
 
     return true;
 }
+
+bool RTIMUMPU9250::writeByte(uint8_t deviceAddress, uint8_t writeAddr, uint8_t writeData)
+{
+#ifdef MPU9250_SPI
+    if(deviceAddress == m_slaveAddr)
+    {
+        select();
+        SPI.transfer(writeAddr);
+        SPI.transfer(writeData);
+        deselect();        
+    }
+    else
+    {
+        uint8_t lengthTemp = 0x01;
+        writeByte(m_slaveAddr, MPU9250_I2C_SLV0_ADDR, deviceAddress);    // Set the I2C slave    addres of AK8963 and set for read.
+        writeByte(m_slaveAddr, MPU9250_I2C_SLV0_REG, writeAddr);         // I2C slave 0 register address from where to begin data transfer
+        writeByte(m_slaveAddr, MPU9250_I2C_SLV0_DO, writeData);          // Read 1 bytes from the magnetometer
+        writeByte(m_slaveAddr, MPU9250_I2C_SLV0_CTRL, lengthTemp);       // Read 1 bytes from the magnetometer
+    }
+    return true;
+#else
+    return I2Cdev::writeByte(deviceAddress, writeAddr, writeData);
 #endif
+}
+
+bool RTIMUMPU9250::writeByte(uint8_t deviceAddress, uint8_t writeAddr, uint8_t *writeData)
+{
+#ifdef MPU9250_SPI
+    if(deviceAddress == m_slaveAddr)
+    {
+        select();
+        SPI.transfer(writeAddr);
+        *writeData = SPI.transfer(*writeData);
+        deselect();        
+    }
+    return true;
+#else
+    return I2Cdev::writeByte(deviceAddress, writeAddr, writeData);
+#endif
+}
+
+bool RTIMUMPU9250::readByte(uint8_t deviceAddress, uint8_t readAddr, uint8_t *readBuf)
+{
+#ifdef MPU9250_SPI
+    if(deviceAddress == m_slaveAddr)
+    {
+        return writeByte(deviceAddress, readAddr | READ_FLAG, readBuf);
+    }
+    else
+    {
+        uint8_t deviceAddressTemp = (deviceAddress|READ_FLAG);
+        uint8_t lengthTemp = 0x81;
+        writeByte(m_slaveAddr, MPU9250_I2C_SLV0_ADDR, deviceAddressTemp);    // Set the I2C slave    addres of AK8963 and set for read.
+        writeByte(m_slaveAddr, MPU9250_I2C_SLV0_REG, readAddr);              // I2C slave 0 register address from where to begin data transfer
+        writeByte(m_slaveAddr, MPU9250_I2C_SLV0_CTRL, lengthTemp);           // Read 1 bytes from the magnetometer
+        readByte(m_slaveAddr, MPU9250_EXT_SENS_DATA_00, readBuf);
+    }
+    return 1;
+#else
+    return I2Cdev::readByte(deviceAddress, readAddr, readByte);
+#endif
+}
+
+bool RTIMUMPU9250::readBytes(uint8_t deviceAddress, uint8_t readAddr, uint8_t numBytes, uint8_t *readBuf)
+{
+#ifdef MPU9250_SPI
+    if(deviceAddress == m_slaveAddr)
+    {
+        unsigned int  i = 0;
+        select();
+        SPI.transfer(readAddr | READ_FLAG);
+        for(i = 0; i < numBytes; i++)
+            readBuf[i] = SPI.transfer(0x00);
+        deselect();
+    }
+    else
+    {
+        uint8_t deviceAddressTemp = (deviceAddress|READ_FLAG);
+        uint8_t lengthTemp = (0x80 | numBytes);
+        writeByte(m_slaveAddr, MPU9250_I2C_SLV0_ADDR, deviceAddressTemp);    // Set the I2C slave    addres of AK8963 and set for read.
+        writeByte(m_slaveAddr, MPU9250_I2C_SLV0_REG, readAddr);                 // I2C slave 0 register address from where to begin data transfer
+        writeByte(m_slaveAddr, MPU9250_I2C_SLV0_CTRL, lengthTemp);            // Read 1 bytes from the magnetometer
+        readBytes(m_slaveAddr, MPU9250_EXT_SENS_DATA_00, numBytes, readBuf);
+    }
+    return 1;
+#else
+    return I2Cdev::readBytes(deviceAddress, readAddr, numBytes, readBuf);
+#endif
+}
+
+void RTIMUMPU9250::select() {
+    //Set CS low to start transmission (interrupts conversion)
+    SPI.beginTransaction(SPISettings(m_spiSpeed, MSBFIRST, SPI_MODE3));
+#ifdef CORE_TEENSY
+    digitalWriteFast(m_spiPin, LOW);
+#else
+    digitalWrite(m_spiPin, LOW);
+#endif
+}
+
+void RTIMUMPU9250::deselect() {
+    //Set CS high to stop transmission (restarts conversion)
+#ifdef CORE_TEENSY
+    digitalWriteFast(m_spiPin, HIGH);
+#else
+    digitalWrite(m_spiPin, HIGH);
+#endif
+    SPI.endTransaction();
+}
+
+#endif
+

@@ -51,11 +51,17 @@ RTARDULINKIMU_MESSAGE linkMessage;                    // the message that is sen
 void setup()
 {
     int errcode;
+
+    //pinMode(LED_BUILTIN, OUTPUT);
+    //digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
   
     Serial.begin(SERIAL_PORT_SPEED);
-    Wire.begin();
+
+//    Wire.begin();
+    SPI.begin();
+
     linkIMU.begin(":RTArduLinkIMU");
-   
+
     imu = RTIMU::createIMU(&settings);                  // create the imu object
     
     Serial.print("RTArduLinkIMU starting using device "); Serial.println(imu->IMUName());
@@ -71,10 +77,11 @@ void setup()
     RTArduLinkHALEEPROMDisplay();
 
     linkIMU.sendDebugMessage("RTArduLinkIMU starting");
+
 }
 
 void loop()
-{ 
+{     
     unsigned char state;
     
     linkIMU.background();
@@ -90,7 +97,7 @@ void loop()
         linkMessage.mag[0] = imu->getCompass().x();
         linkMessage.mag[1] = imu->getCompass().y();
         linkMessage.mag[2] = imu->getCompass().z();
-        
+
         state = 0;
         if (imu->IMUGyroBiasValid())
             state |= RTARDULINKIMU_STATE_GYRO_BIAS_VALID;
@@ -101,6 +108,7 @@ void loop()
         linkIMU.sendMessage(RTARDULINK_MESSAGE_IMU, state,
                 (unsigned char *)(&linkMessage), sizeof(RTARDULINKIMU_MESSAGE));
     }
+    
 }
 
 void RTArduLinkIMU::processCustomMessage(unsigned char messageType, unsigned char messageParam,

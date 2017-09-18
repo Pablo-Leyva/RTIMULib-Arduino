@@ -33,6 +33,7 @@
 //#define MPU9150_69                      // MPU9150 at address 0x69
 //#define MPU9250_68                      // MPU9250 at address 0x68
 //#define MPU9250_69                      // MPU9250 at address 0x69
+#define MPU9250_SPI                     // MPU9250 SPI communication
 //#define LSM9DS0_6a                      // LSM9DS0 at address 0x6a
 //#define LSM9DS0_6b                      // LSM9DS0 at address 0x6b
 //#define GD20HM303D_6a                   // GD20H + M303D at address 0x6a
@@ -43,7 +44,7 @@
 //#define GD20M303DLHC_6b                 // GD20 + M303DLHC at address 0x6b
 //#define BNO055_28                       // BNO055 at address 0x28
 //#define BNO055_29                       // BNO055 at address 0x29
-#define GY85_53                       
+//#define GY85_53                       
 //#define GY85_1d                     
 
 //  IMU type codes
@@ -55,7 +56,7 @@
 #define RTIMU_TYPE_MPU9250                  5                   // InvenSense MPU9250
 #define RTIMU_TYPE_GD20HM303DLHC            6                   // STM L3GD20H/LSM303DHLC (new Adafruit IMU)
 #define RTIMU_TYPE_BNO055                   7                   // BNO055
-#define RTIMU_TYPE_GY85                     8                   // BNO055
+#define RTIMU_TYPE_GY85                     8                   // GY85
 
 //  Pressure enable defs - only one should be enabled, the rest commented out
 

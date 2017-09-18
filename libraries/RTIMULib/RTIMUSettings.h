@@ -36,6 +36,8 @@ public:
 
     int m_imuType;                                          // type code of imu in use
     unsigned char m_I2CSlaveAddress;                        // I2C slave address of the imu
+    unsigned char m_SPIChipSelectPin;                       // SPI chip select pin
+    long m_SPIClkSpeed;                                     // SPI bus speed
     int m_pressureType;                                     // type code of pressure sensor in use
     unsigned char m_I2CPressureAddress;                     // I2C slave address of the pressure sensor
 
@@ -51,7 +53,7 @@ public:
     int m_MPU9150AccelFsr;                                  // FSR code for the accel
 #endif
 
-#if defined(MPU9250_68) || defined(MPU9250_69)
+#if defined(MPU9250_68) || defined(MPU9250_69) || defined(MPU9250_SPI)
     //  MPU9250
 
     int m_MPU9250GyroAccelSampleRate;                       // the sample rate (samples per second) for gyro and accel

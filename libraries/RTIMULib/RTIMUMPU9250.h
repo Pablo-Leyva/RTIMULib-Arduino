@@ -46,6 +46,7 @@
 #define MPU9250_I2C_SLV0_ADDR       0x25
 #define MPU9250_I2C_SLV0_REG        0x26
 #define MPU9250_I2C_SLV0_CTRL       0x27
+#define MPU9250_I2C_SLV0_DO         0x63
 #define MPU9250_I2C_SLV1_ADDR       0x28
 #define MPU9250_I2C_SLV1_REG        0x29
 #define MPU9250_I2C_SLV1_CTRL       0x2a
@@ -126,6 +127,8 @@
 
 #define MPU9250_FIFO_CHUNK_SIZE     12                      // gyro and accels take 12 bytes
 
+#define READ_FLAG                   0x80
+
 class RTIMUMPU9250 : public RTIMU
 {
 public:
@@ -146,6 +149,15 @@ public:
     virtual int IMUGetPollInterval();
 
 private:
+    void select();
+    void deselect();
+
+    bool writeByte(uint8_t deviceAddress, uint8_t writeAddr, uint8_t *writeData );
+    bool writeByte(uint8_t deviceAddress, uint8_t writeAddr, uint8_t writeData );
+    bool writeBytes(uint8_t deviceAddress, uint8_t writeAddr, uint8_t NumBytes, uint8_t *writeData);
+    bool readByte(uint8_t deviceAddress, uint8_t readAddr, uint8_t *readByte );
+    bool readBytes(uint8_t deviceAddress, uint8_t readAddr, uint8_t NumBytes, uint8_t *readBuf);
+
     bool setGyroConfig();
     bool setAccelConfig();
     bool setSampleRate();
@@ -157,6 +169,8 @@ private:
 
     bool m_firstTime;                                       // if first sample
 
+    unsigned char m_spiPin;                                 // SPI chip select pin
+    long m_spiSpeed;                                        // SPI bus speed
     unsigned char m_slaveAddr;                              // I2C address of MPU9250
     unsigned char m_bus;                                    // I2C bus (usually 1 for Raspberry Pi for example)
 
@@ -168,7 +182,6 @@ private:
 
     RTFLOAT m_gyroScale;
     RTFLOAT m_accelScale;
-
     RTFLOAT m_compassAdjust[3];                             // the compass fuse ROM values converted for use
 };
 

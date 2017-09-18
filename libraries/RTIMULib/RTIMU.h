@@ -27,6 +27,7 @@
 #include "RTMath.h"
 #include "RTIMULibDefs.h"
 #include "I2Cdev.h"
+#include "SPI.h"
 
 #define I2CWrite(x, y, z) I2Cdev::writeByte(x, y, z)
 #define I2CRead(w, x, y, z) I2Cdev::readBytes(w, x, y, z)

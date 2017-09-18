@@ -27,7 +27,7 @@
 #include "RTIMUMPU9150.h"
 #endif
 
-#if defined(MPU9250_68) || defined(MPU9250_69)
+#if defined(MPU9250_68) || defined(MPU9250_69) || defined(MPU9250_SPI)
 #include "RTIMUMPU9250.h"
 #endif
 
@@ -75,6 +75,8 @@ RTIMUSettings::RTIMUSettings()
 
     m_imuType = -1;
     m_I2CSlaveAddress = 0;
+    m_SPIChipSelectPin = 0;
+
 
 #ifdef MPU9150_68
     //  MPU9150 defaults
@@ -110,6 +112,8 @@ RTIMUSettings::RTIMUSettings()
     m_MPU9250GyroFsr = MPU9250_GYROFSR_1000;
     m_MPU9250AccelFsr = MPU9250_ACCELFSR_8;
     m_I2CSlaveAddress = MPU9250_ADDRESS0;
+    m_SPIChipSelectPin = 10;
+    m_SPIClkSpeed = 1000000;
 #endif
 
 #ifdef MPU9250_69
@@ -119,9 +123,25 @@ RTIMUSettings::RTIMUSettings()
     m_MPU9250CompassSampleRate = 40;
     m_MPU9250GyroLpf = MPU9250_GYRO_LPF_41;
     m_MPU9250AccelLpf = MPU9250_ACCEL_LPF_41;
-    m_MPU9250GyroFsr = MPU9250_GYROFSR_1000;
+    m_MPU9250GyroFsr = MPU9250_GYROFSR_2000;
     m_MPU9250AccelFsr = MPU9250_ACCELFSR_8;
     m_I2CSlaveAddress = MPU9250_ADDRESS1;
+    m_SPIChipSelectPin = 10;
+    m_SPIClkSpeed = 1000000;
+#endif
+
+#ifdef MPU9250_SPI
+    //  MPU9250 defaults
+
+    m_MPU9250GyroAccelSampleRate = 100;
+    m_MPU9250CompassSampleRate = 100;
+    m_MPU9250GyroLpf = MPU9250_GYRO_LPF_92;
+    m_MPU9250AccelLpf = MPU9250_ACCEL_LPF_92;
+    m_MPU9250GyroFsr = MPU9250_GYROFSR_1000;
+    m_MPU9250AccelFsr = MPU9250_ACCELFSR_8;
+    m_I2CSlaveAddress = 0;
+    m_SPIChipSelectPin = 10;
+    m_SPIClkSpeed = 1000000;
 #endif
 
 #ifdef LSM9DS0_6a
